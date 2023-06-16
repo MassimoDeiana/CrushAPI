@@ -20,8 +20,8 @@ public class SecurityConfig  {
                         .anyRequest().permitAll()
                 )
                 .headers(AbstractHttpConfigurer::disable)
-                .csrf(csrf -> csrf
-                        .ignoringRequestMatchers(AntPathRequestMatcher.antMatcher("/h2-console/**")));
+                .csrf(AbstractHttpConfigurer::disable);
+//                        .ignoringRequestMatchers(AntPathRequestMatcher.antMatcher("/h2-console/**")));
         return http.build();
     }
 

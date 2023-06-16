@@ -19,18 +19,18 @@ public class AuthenticationController {
     @PostMapping(value = "/phone-number/send-otp", produces = "application/json")
     public ResponseEntity<String> generateOTP(@RequestBody String phoneNumber) {
 
-        String otp = phoneNumberVerificationService.generateOTP(phoneNumber);
+        String verificationStatus = phoneNumberVerificationService.generateOTP(phoneNumber);
 
-        return ResponseEntity.ok(otp);
+        return ResponseEntity.ok(verificationStatus);
     }
 
     @Operation(summary = "Verify OTP")
     @PostMapping(value = "/phone-number/verify-otp/{phoneNumber}", produces = "application/json")
-    public ResponseEntity<Boolean> verifyOTP(@PathVariable String phoneNumber, @RequestBody String otp) {
+    public ResponseEntity<String> verifyOTP(@PathVariable String phoneNumber, @RequestBody String otp) {
 
-        boolean isVerified = phoneNumberVerificationService.verifyOTP(phoneNumber, otp);
+        String verificationStatus = phoneNumberVerificationService.verifyOTP(phoneNumber, otp);
 
-        return ResponseEntity.ok(isVerified);
+        return ResponseEntity.ok(verificationStatus);
     }
 
 }
