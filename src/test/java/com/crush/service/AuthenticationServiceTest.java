@@ -62,7 +62,7 @@ public class AuthenticationServiceTest {
 
     @BeforeEach
     public void setup() {
-        registerRequest = new RegisterRequest(USER_PHONE_NUMBER, PASSWORD);
+        registerRequest = new RegisterRequest(USER_PHONE_NUMBER, PASSWORD, PASSWORD);
         authenticationRequest = new AuthenticationRequest(USER_PHONE_NUMBER, PASSWORD);
         expectedUser = createUserFromRequest(registerRequest);
     }
