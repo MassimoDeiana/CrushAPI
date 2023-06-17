@@ -1,36 +1,39 @@
 package com.crush.controller;
 
-import com.crush.service.PhoneNumberVerificationService;
-import io.swagger.v3.oas.annotations.Operation;
+import com.crush.dtos.authentication.AuthenticationRequest;
+import com.crush.dtos.authentication.AuthenticationResponse;
+import com.crush.dtos.authentication.RegisterRequest;
+import com.crush.service.auth.AuthenticationService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+
 @RestController
 @RequestMapping("/auth")
-@Tag(name = "Authentication", description = "Authentication by phone number")
+@Tag(name = "Authentication", description = "Authentication and registration")
 @RequiredArgsConstructor
 public class AuthenticationController {
 
-    private final PhoneNumberVerificationService phoneNumberVerificationService;
+    private final AuthenticationService service;
 
-    @Operation(summary = "Generate OTP")
-    @PostMapping(value = "/phone-number/send-otp", produces = "application/json")
-    public ResponseEntity<String> generateOTP(@RequestBody String phoneNumber) {
-
-        String verificationStatus = phoneNumberVerificationService.generateOTP(phoneNumber);
-
-        return ResponseEntity.ok(verificationStatus);
+    @PostMapping("/register")
+    public ResponseEntity<AuthenticationResponse> register(@RequestBody RegisterRequest request) {
+        return ResponseEntity.ok(service.register(request));
     }
 
-    @Operation(summary = "Verify OTP")
-    @PostMapping(value = "/phone-number/verify-otp/{phoneNumber}", produces = "application/json")
-    public ResponseEntity<String> verifyOTP(@PathVariable String phoneNumber, @RequestBody String otp) {
+    @PostMapping("/authenticate")
+    public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
+        return ResponseEntity.ok(service.authenticate(request));
+    }
 
-        String verificationStatus = phoneNumberVerificationService.verifyOTP(phoneNumber, otp);
-
-        return ResponseEntity.ok(verificationStatus);
+    @PostMapping("/refresh-token")
+    public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        service.refreshToken(request, response);
     }
 
 }

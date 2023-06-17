@@ -1,6 +1,7 @@
 package com.crush.service;
 
-import com.crush.service.impl.PhoneNumberVerificationServiceImpl;
+import com.crush.service.auth.impl.PhoneNumberVerificationServiceImpl;
+import com.crush.service.auth.TwilioService;
 import com.twilio.rest.verify.v2.service.Verification;
 import com.twilio.rest.verify.v2.service.VerificationCheck;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,4 +1,4 @@
-package com.crush.service;
+package com.crush.service.auth;
 
 import com.twilio.rest.verify.v2.service.Verification;
 import com.twilio.rest.verify.v2.service.VerificationCheck;

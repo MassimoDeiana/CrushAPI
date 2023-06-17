@@ -1,20 +1,20 @@
 package com.crush.domain.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.crush.domain.enums.Role;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.List;
 
 @Entity
 @Builder
@@ -29,7 +29,7 @@ public class User implements Serializable, UserDetails {
 
     @Id
     @GeneratedValue
-    private String id;
+    private Integer id;
     private String email;
     private String phoneNumber;
     private String password;
@@ -38,6 +38,9 @@ public class User implements Serializable, UserDetails {
     private String bio;
     private LocalDate birthDate;
 
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
     private boolean isAccountNonExpired;
     private boolean isAccountNonLocked;
     private boolean isCredentialsNonExpired;
@@ -45,7 +48,7 @@ public class User implements Serializable, UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return null;
+        return List.of(new SimpleGrantedAuthority(role.name()));
     }
 
 

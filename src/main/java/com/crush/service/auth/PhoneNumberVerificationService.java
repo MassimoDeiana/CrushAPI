@@ -1,4 +1,4 @@
-package com.crush.service;
+package com.crush.service.auth;
 
 
 public interface PhoneNumberVerificationService {

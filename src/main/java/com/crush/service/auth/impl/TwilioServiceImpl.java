@@ -1,6 +1,6 @@
-package com.crush.service.impl;
+package com.crush.service.auth.impl;
 
-import com.crush.service.TwilioService;
+import com.crush.service.auth.TwilioService;
 import com.twilio.Twilio;
 import com.twilio.rest.verify.v2.service.Verification;
 import com.twilio.rest.verify.v2.service.VerificationCheck;
