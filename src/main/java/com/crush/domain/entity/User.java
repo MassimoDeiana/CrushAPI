@@ -30,8 +30,11 @@ public class User implements Serializable, UserDetails {
     @Id
     @GeneratedValue
     private Integer id;
-    private String email;
+
+    @Column(unique = true)
     private String phoneNumber;
+
+    private String email;
     private String password;
     private String username;
 
@@ -41,6 +44,7 @@ public class User implements Serializable, UserDetails {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    private boolean isVerified;
     private boolean isAccountNonExpired;
     private boolean isAccountNonLocked;
     private boolean isCredentialsNonExpired;

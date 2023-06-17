@@ -25,7 +25,7 @@ import java.io.IOException;
 @Service
 @RequiredArgsConstructor
 public class AuthenticationServiceImpl implements AuthenticationService {
-    private final UserRepository repository;
+    private final UserRepository userRepository;
     private final TokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -33,87 +33,123 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public AuthenticationResponse register(RegisterRequest request) {
-        var user = User.builder()
-                .username(request.getUsername())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .role(request.getRole())
-                .build();
-        var savedUser = repository.save(user);
+        var user = buildUserFromRequest(request);
+
+        var savedUser = userRepository.save(user);
         var jwtToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
+
         saveUserToken(savedUser, jwtToken);
-        return AuthenticationResponse.builder()
-                .accessToken(jwtToken)
-                .refreshToken(refreshToken)
-                .build();
+
+        return buildAuthenticationResponse(jwtToken, refreshToken);
     }
 
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
+        authenticateUser(request);
+
+        var user = userRepository.findByPhoneNumber(request.getPhoneNumber()).orElseThrow();
+        var jwtToken = jwtService.generateToken(user);
+        var refreshToken = jwtService.generateRefreshToken(user);
+
+        revokeAllUserTokens(user);
+
+        saveUserToken(user, jwtToken);
+
+        return buildAuthenticationResponse(jwtToken, refreshToken);
+    }
+
+
+    @Override
+    public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+
+        if (authHeader == null ||!authHeader.startsWith("Bearer ")) {
+            return;
+        }
+
+        String refreshToken = extractFromHeader(authHeader);
+        String userPhoneNumber = jwtService.extractUsername(refreshToken);
+
+        if (userPhoneNumber != null) {
+            refreshUserToken(response, refreshToken, userPhoneNumber);
+        }
+    }
+
+    private void refreshUserToken(HttpServletResponse response, String refreshToken, String userPhoneNumber) throws IOException {
+        var user = this.userRepository.findByPhoneNumber(userPhoneNumber).orElseThrow();
+
+        if (jwtService.isTokenValid(refreshToken, user)) {
+            var accessToken = jwtService.generateToken(user);
+
+            revokeAllUserTokens(user);
+            saveUserToken(user, accessToken);
+
+            var authResponse = buildAuthenticationResponse(accessToken, refreshToken);
+
+            writeAuthResponseToOutputStream(response, authResponse);
+        }
+    }
+
+    private void writeAuthResponseToOutputStream(HttpServletResponse response, AuthenticationResponse authResponse) throws IOException {
+        new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
+    }
+
+    private String extractFromHeader(String authHeader) {
+        return authHeader.substring(7);
+    }
+
+
+    private void authenticateUser(AuthenticationRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
+                        request.getPhoneNumber(),
                         request.getPassword()
                 )
         );
-        var user = repository.findByEmail(request.getEmail())
-                .orElseThrow();
-        var jwtToken = jwtService.generateToken(user);
-        var refreshToken = jwtService.generateRefreshToken(user);
-        revokeAllUserTokens(user);
-        saveUserToken(user, jwtToken);
+    }
+
+    private AuthenticationResponse buildAuthenticationResponse(String jwtToken, String refreshToken) {
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
                 .build();
     }
 
-    @Override
-    public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        final String refreshToken;
-        final String userEmail;
-        if (authHeader == null ||!authHeader.startsWith("Bearer ")) {
-            return;
-        }
-        refreshToken = authHeader.substring(7);
-        userEmail = jwtService.extractUsername(refreshToken);
-        if (userEmail != null) {
-            var user = this.repository.findByEmail(userEmail)
-                    .orElseThrow();
-            if (jwtService.isTokenValid(refreshToken, user)) {
-                var accessToken = jwtService.generateToken(user);
-                revokeAllUserTokens(user);
-                saveUserToken(user, accessToken);
-                var authResponse = AuthenticationResponse.builder()
-                        .accessToken(accessToken)
-                        .refreshToken(refreshToken)
-                        .build();
-                new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
-            }
-        }
+    private User buildUserFromRequest(RegisterRequest request) {
+        return User.builder()
+                .phoneNumber(request.getPhoneNumber())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(request.getRole())
+                .build();
     }
 
     private void saveUserToken(User user, String jwtToken) {
-        var token = Token.builder()
+        Token token = buildToken(user, jwtToken);
+        tokenRepository.save(token);
+    }
+
+    private Token buildToken(User user, String jwtToken) {
+        return Token.builder()
                 .user(user)
                 .token(jwtToken)
                 .tokenType(TokenType.BEARER)
                 .expired(false)
                 .revoked(false)
                 .build();
-        tokenRepository.save(token);
     }
 
     private void revokeAllUserTokens(User user) {
         var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());
+
         if (validUserTokens.isEmpty())
             return;
+
         validUserTokens.forEach(token -> {
             token.setExpired(true);
             token.setRevoked(true);
         });
+
         tokenRepository.saveAll(validUserTokens);
     }
 }
