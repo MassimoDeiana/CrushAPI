@@ -1,0 +1,259 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <title>Coverage Report > AuthenticationServiceImpl</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.crush.service.auth.impl</a>
+</div>
+
+<h1>Coverage Summary for Class: AuthenticationServiceImpl (com.crush.service.auth.impl)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">AuthenticationServiceImpl</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/14)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/56)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.crush.service.auth.impl;
+&nbsp;
+&nbsp;import com.crush.domain.entity.Token;
+&nbsp;import com.crush.domain.entity.User;
+&nbsp;import com.crush.domain.enums.Role;
+&nbsp;import com.crush.domain.enums.TokenType;
+&nbsp;import com.crush.dtos.authentication.AuthenticationRequest;
+&nbsp;import com.crush.dtos.authentication.AuthenticationResponse;
+&nbsp;import com.crush.dtos.authentication.RegisterRequest;
+&nbsp;import com.crush.repository.TokenRepository;
+&nbsp;import com.crush.repository.UserRepository;
+&nbsp;import com.crush.service.auth.AuthenticationService;
+&nbsp;import com.crush.service.auth.JwtService;
+&nbsp;import com.fasterxml.jackson.databind.ObjectMapper;
+&nbsp;import jakarta.servlet.http.HttpServletRequest;
+&nbsp;import jakarta.servlet.http.HttpServletResponse;
+&nbsp;import lombok.RequiredArgsConstructor;
+&nbsp;import org.springframework.http.HttpHeaders;
+&nbsp;import org.springframework.security.authentication.AuthenticationManager;
+&nbsp;import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+&nbsp;import org.springframework.security.crypto.password.PasswordEncoder;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;
+&nbsp;import java.io.IOException;
+&nbsp;
+&nbsp;@Service
+<b class="nc">&nbsp;@RequiredArgsConstructor</b>
+&nbsp;public class AuthenticationServiceImpl implements AuthenticationService {
+&nbsp;    private final UserRepository userRepository;
+&nbsp;    private final TokenRepository tokenRepository;
+&nbsp;    private final PasswordEncoder passwordEncoder;
+&nbsp;    private final JwtService jwtService;
+&nbsp;    private final AuthenticationManager authenticationManager;
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public AuthenticationResponse register(RegisterRequest request) {
+<b class="nc">&nbsp;        var user = buildUserFromRequest(request);</b>
+&nbsp;
+<b class="nc">&nbsp;        var savedUser = userRepository.save(user);</b>
+<b class="nc">&nbsp;        var jwtToken = jwtService.generateToken(user);</b>
+<b class="nc">&nbsp;        var refreshToken = jwtService.generateRefreshToken(user);</b>
+&nbsp;
+<b class="nc">&nbsp;        saveUserToken(savedUser, jwtToken);</b>
+&nbsp;
+<b class="nc">&nbsp;        return buildAuthenticationResponse(jwtToken, refreshToken);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public AuthenticationResponse authenticate(AuthenticationRequest request) {
+<b class="nc">&nbsp;        authenticateUser(request);</b>
+&nbsp;
+<b class="nc">&nbsp;        var user = userRepository.findByPhoneNumber(request.getPhoneNumber()).orElseThrow();</b>
+<b class="nc">&nbsp;        var jwtToken = jwtService.generateToken(user);</b>
+<b class="nc">&nbsp;        var refreshToken = jwtService.generateRefreshToken(user);</b>
+&nbsp;
+<b class="nc">&nbsp;        revokeAllUserTokens(user);</b>
+&nbsp;
+<b class="nc">&nbsp;        saveUserToken(user, jwtToken);</b>
+&nbsp;
+<b class="nc">&nbsp;        return buildAuthenticationResponse(jwtToken, refreshToken);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+<b class="nc">&nbsp;        final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);</b>
+&nbsp;
+<b class="nc">&nbsp;        if (authHeader == null ||!authHeader.startsWith(&quot;Bearer &quot;)) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        String refreshToken = extractFromHeader(authHeader);</b>
+<b class="nc">&nbsp;        String userPhoneNumber = jwtService.extractUsername(refreshToken);</b>
+&nbsp;
+<b class="nc">&nbsp;        if (userPhoneNumber != null) {</b>
+<b class="nc">&nbsp;            refreshUserToken(response, refreshToken, userPhoneNumber);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private void refreshUserToken(HttpServletResponse response, String refreshToken, String userPhoneNumber) throws IOException {
+<b class="nc">&nbsp;        var user = this.userRepository.findByPhoneNumber(userPhoneNumber).orElseThrow();</b>
+&nbsp;
+<b class="nc">&nbsp;        if (jwtService.isTokenValid(refreshToken, user)) {</b>
+<b class="nc">&nbsp;            var accessToken = jwtService.generateToken(user);</b>
+&nbsp;
+<b class="nc">&nbsp;            revokeAllUserTokens(user);</b>
+<b class="nc">&nbsp;            saveUserToken(user, accessToken);</b>
+&nbsp;
+<b class="nc">&nbsp;            var authResponse = buildAuthenticationResponse(accessToken, refreshToken);</b>
+&nbsp;
+<b class="nc">&nbsp;            writeAuthResponseToOutputStream(response, authResponse);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private void writeAuthResponseToOutputStream(HttpServletResponse response, AuthenticationResponse authResponse) throws IOException {
+<b class="nc">&nbsp;        new ObjectMapper().writeValue(response.getOutputStream(), authResponse);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String extractFromHeader(String authHeader) {
+<b class="nc">&nbsp;        return authHeader.substring(7);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;    private void authenticateUser(AuthenticationRequest request) {
+<b class="nc">&nbsp;        authenticationManager.authenticate(</b>
+&nbsp;                new UsernamePasswordAuthenticationToken(
+<b class="nc">&nbsp;                        request.getPhoneNumber(),</b>
+<b class="nc">&nbsp;                        request.getPassword()</b>
+&nbsp;                )
+&nbsp;        );
+&nbsp;    }
+&nbsp;
+&nbsp;    private AuthenticationResponse buildAuthenticationResponse(String jwtToken, String refreshToken) {
+<b class="nc">&nbsp;        return AuthenticationResponse.builder()</b>
+<b class="nc">&nbsp;                .accessToken(jwtToken)</b>
+<b class="nc">&nbsp;                .refreshToken(refreshToken)</b>
+<b class="nc">&nbsp;                .build();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private User buildUserFromRequest(RegisterRequest request) {
+<b class="nc">&nbsp;        return User.builder()</b>
+<b class="nc">&nbsp;                .phoneNumber(request.getPhoneNumber())</b>
+<b class="nc">&nbsp;                .password(passwordEncoder.encode(request.getPassword()))</b>
+<b class="nc">&nbsp;                .role(Role.USER)</b>
+<b class="nc">&nbsp;                .build();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void saveUserToken(User user, String jwtToken) {
+<b class="nc">&nbsp;        Token token = buildToken(user, jwtToken);</b>
+<b class="nc">&nbsp;        tokenRepository.save(token);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Token buildToken(User user, String jwtToken) {
+<b class="nc">&nbsp;        return Token.builder()</b>
+<b class="nc">&nbsp;                .user(user)</b>
+<b class="nc">&nbsp;                .token(jwtToken)</b>
+<b class="nc">&nbsp;                .tokenType(TokenType.BEARER)</b>
+<b class="nc">&nbsp;                .expired(false)</b>
+<b class="nc">&nbsp;                .revoked(false)</b>
+<b class="nc">&nbsp;                .build();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void revokeAllUserTokens(User user) {
+<b class="nc">&nbsp;        var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());</b>
+&nbsp;
+<b class="nc">&nbsp;        if (validUserTokens.isEmpty())</b>
+&nbsp;            return;
+&nbsp;
+<b class="nc">&nbsp;        validUserTokens.forEach(token -&gt; {</b>
+<b class="nc">&nbsp;            token.setExpired(true);</b>
+<b class="nc">&nbsp;            token.setRevoked(true);</b>
+&nbsp;        });
+&nbsp;
+<b class="nc">&nbsp;        tokenRepository.saveAll(validUserTokens);</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2023-06-17 18:32</div>
+</div>
+</body>
+</html>
