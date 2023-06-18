@@ -17,12 +17,12 @@ public class RegisterRequest {
   @NotEmpty(message = "Phone number is required")
   private String phoneNumber;
 
-  @ValidPassword
   @NotEmpty(message = "Password is required")
+  @ValidPassword
   private String password;
 
-  @ValidPassword
   @NotEmpty(message = "Confirm Password is required")
+  @ValidPassword
   private String confirmPassword;
 
 }

@@ -1,5 +1,6 @@
 package com.crush.exception;
 
+import jakarta.validation.ValidationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,14 @@ public class ApiExceptionHandler {
         logException(e);
 
         return buildResponseEntity(HttpStatus.BAD_REQUEST, e.getMessage());
+    }
+
+    @ExceptionHandler(value = ValidationException.class)
+    public ResponseEntity<ApiException> handleValidationException(ValidationException e) {
+
+        logException(e);
+
+        return buildResponseEntity(HttpStatus.BAD_REQUEST, e.getCause().getMessage());
     }
 
     @ExceptionHandler(value = UserNotFoundException.class)
