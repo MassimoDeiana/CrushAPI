@@ -1,6 +1,6 @@
 package com.crush.dtos.authentication;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,9 +12,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class AuthenticationRequest {
 
-  @NotNull
-  private String phoneNumber;
+    @NotEmpty(message = "Phone number is required")
+    private String phoneNumber;
 
-  @NotNull
-  private String password;
+    @NotEmpty(message = "Password is required")
+    private String password;
 }

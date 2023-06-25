@@ -2,6 +2,7 @@ package com.crush.service.auth.impl;
 
 import com.crush.domain.entity.Token;
 import com.crush.domain.entity.User;
+import com.crush.domain.enums.AccountStatus;
 import com.crush.domain.enums.Role;
 import com.crush.domain.enums.TokenType;
 import com.crush.dtos.authentication.AuthenticationRequest;
@@ -122,6 +123,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .phoneNumber(request.getPhoneNumber())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.USER)
+                .accountStatus(AccountStatus.INCOMPLETE)
                 .build();
     }
 

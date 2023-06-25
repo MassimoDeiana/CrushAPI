@@ -1,5 +1,7 @@
 package com.crush.service;
 
+import com.crush.domain.entity.User;
+import com.crush.repository.UserRepository;
 import com.crush.service.auth.impl.PhoneNumberVerificationServiceImpl;
 import com.crush.service.auth.TwilioService;
 import com.twilio.rest.verify.v2.service.Verification;
@@ -9,6 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -22,6 +26,9 @@ public class PhoneNumberVerificationServiceTest {
     @InjectMocks
     private PhoneNumberVerificationServiceImpl phoneNumberVerificationService;
 
+    @Mock
+    private UserRepository userRepository;
+
     private static final String PHONE_NUMBER = "1234567890";
     private static final String OTP = "123456";
     private static final String PENDING_STATUS = "pending";
@@ -30,6 +37,7 @@ public class PhoneNumberVerificationServiceTest {
     @BeforeEach
     public void setup() {
         MockitoAnnotations.openMocks(this);
+        when(userRepository.findByPhoneNumber(PHONE_NUMBER)).thenReturn(buildFakeUser());
     }
 
     @Test
@@ -82,6 +90,13 @@ public class PhoneNumberVerificationServiceTest {
 
     private void verifyTwilioServiceCheckedVerificationOnce() {
         verify(twilioService, times(1)).checkVerification(PHONE_NUMBER, OTP);
+    }
+
+    private Optional<User> buildFakeUser() {
+        User user = new User();
+        user.setPhoneNumber(PHONE_NUMBER);
+        user.setPhoneNumberVerified(false);
+        return Optional.of(user);
     }
 
 }

@@ -57,12 +57,13 @@ public class AuthenticationServiceTest {
     private AuthenticationRequest authenticationRequest;
     private static final String JWT_TOKEN = "jwtToken";
     private static final String REFRESH_TOKEN = "refreshToken";
+    private static final String COUNTRY_CODE = "+32";
     private static final String USER_PHONE_NUMBER = "+32111223344";
     private static final String PASSWORD = "password";
 
     @BeforeEach
     public void setup() {
-        registerRequest = new RegisterRequest(USER_PHONE_NUMBER, PASSWORD, PASSWORD);
+        registerRequest = new RegisterRequest(COUNTRY_CODE, USER_PHONE_NUMBER, PASSWORD, PASSWORD);
         authenticationRequest = new AuthenticationRequest(USER_PHONE_NUMBER, PASSWORD);
         expectedUser = createUserFromRequest(registerRequest);
     }

@@ -26,6 +26,7 @@ public class TwilioServiceImpl implements TwilioService {
         return Verification.creator(
                         System.getenv("TWILIO_VERIFY_SERVICE_SID"),
                         phoneNumber,
+
                         "sms")
                 .create();
     }

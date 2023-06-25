@@ -41,6 +41,14 @@ public class ApiExceptionHandler {
         return buildResponseEntity(HttpStatus.NOT_FOUND, e.getMessage());
     }
 
+    @ExceptionHandler(value = UserAlreadyVerifiedException.class)
+    public ResponseEntity<ApiException> handleUserAlreadyVerifiedException(UserAlreadyVerifiedException e) {
+
+        logException(e);
+
+        return buildResponseEntity(HttpStatus.BAD_REQUEST, e.getMessage());
+    }
+
     @ExceptionHandler(value = DataIntegrityViolationException.class)
     public ResponseEntity<ApiException> handleDataIntegrityViolationException(DataIntegrityViolationException e) {
         logException(e);

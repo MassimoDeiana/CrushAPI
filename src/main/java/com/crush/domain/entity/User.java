@@ -1,5 +1,6 @@
 package com.crush.domain.entity;
 
+import com.crush.domain.enums.AccountStatus;
 import com.crush.domain.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -38,17 +39,29 @@ public class User implements Serializable, UserDetails {
     private String password;
     private String username;
 
+    @Enumerated(EnumType.STRING)
+    private AccountStatus accountStatus;
+
     private String bio;
     private LocalDate birthDate;
 
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    private boolean isVerified;
-    private boolean isAccountNonExpired;
-    private boolean isAccountNonLocked;
-    private boolean isCredentialsNonExpired;
-    private boolean isEnabled;
+    private boolean isPhoneNumberVerified;
+    private boolean isEmailVerified;
+
+    @Builder.Default
+    private boolean isAccountNonExpired = true;
+
+    @Builder.Default
+    private boolean isAccountNonLocked = true;
+
+    @Builder.Default
+    private boolean isCredentialsNonExpired = true;
+
+    @Builder.Default
+    private boolean isEnabled = true;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
