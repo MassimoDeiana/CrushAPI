@@ -1,4 +1,4 @@
-package com.crush.service.validation;
+package com.crush.service.validation.phone;
 
 import jakarta.validation.Constraint;
 

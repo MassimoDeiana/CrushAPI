@@ -35,6 +35,7 @@ public class User implements Serializable, UserDetails {
     @Column(unique = true)
     private String phoneNumber;
 
+    private String countryCode;
     private String email;
     private String password;
     private String username;

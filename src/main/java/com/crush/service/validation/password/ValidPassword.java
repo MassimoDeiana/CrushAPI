@@ -1,4 +1,4 @@
-package com.crush.service.validation;
+package com.crush.service.validation.password;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;

@@ -1,7 +1,7 @@
 package com.crush.dtos.authentication;
 
-import com.crush.service.validation.ValidPassword;
-import com.crush.service.validation.ValidPhoneNumber;
+import com.crush.service.validation.password.ValidPassword;
+import com.crush.service.validation.phone.ValidPhoneNumber;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

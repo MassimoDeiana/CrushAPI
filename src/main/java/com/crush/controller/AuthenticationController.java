@@ -3,6 +3,7 @@ package com.crush.controller;
 import com.crush.dtos.authentication.AuthenticationRequest;
 import com.crush.dtos.authentication.AuthenticationResponse;
 import com.crush.dtos.authentication.RegisterRequest;
+import com.crush.dtos.authentication.RegisterResponse;
 import com.crush.service.auth.AuthenticationService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,7 +24,7 @@ public class AuthenticationController {
     private final AuthenticationService service;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthenticationResponse> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.ok(service.register(request));
     }
 

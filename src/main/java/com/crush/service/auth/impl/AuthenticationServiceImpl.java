@@ -8,10 +8,13 @@ import com.crush.domain.enums.TokenType;
 import com.crush.dtos.authentication.AuthenticationRequest;
 import com.crush.dtos.authentication.AuthenticationResponse;
 import com.crush.dtos.authentication.RegisterRequest;
+import com.crush.dtos.authentication.RegisterResponse;
+import com.crush.mapper.AuthenticationMapper;
 import com.crush.repository.TokenRepository;
 import com.crush.repository.UserRepository;
 import com.crush.service.auth.AuthenticationService;
 import com.crush.service.auth.JwtService;
+import com.crush.service.auth.TwilioService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -27,30 +30,35 @@ import java.io.IOException;
 @Service
 @RequiredArgsConstructor
 public class AuthenticationServiceImpl implements AuthenticationService {
+
     private final UserRepository userRepository;
     private final TokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final TwilioService twilioService;
+    private final AuthenticationMapper mapper;
 
     @Override
-    public AuthenticationResponse register(RegisterRequest request) {
+    public RegisterResponse register(RegisterRequest request) {
         var user = buildUserFromRequest(request);
 
         var savedUser = userRepository.save(user);
-        var jwtToken = jwtService.generateToken(user);
-        var refreshToken = jwtService.generateRefreshToken(user);
 
-        saveUserToken(savedUser, jwtToken);
+//        twilioService.createVerification(savedUser.getPhoneNumber()); //TO DO: uncomment this line when you want to send verification code
 
-        return buildAuthenticationResponse(jwtToken, refreshToken);
+        return mapper.map(savedUser);
     }
 
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
+
         authenticateUser(request);
 
         var user = userRepository.findByPhoneNumber(request.getPhoneNumber()).orElseThrow();
+
+        checkIfUserCanLogin(user);
+
         var jwtToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
 
@@ -60,7 +68,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         return buildAuthenticationResponse(jwtToken, refreshToken);
     }
-
 
     @Override
     public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -75,6 +82,23 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         if (userPhoneNumber != null) {
             refreshUserToken(response, refreshToken, userPhoneNumber);
+        }
+    }
+
+    private void checkIfUserCanLogin(User user) {
+        checkIfUserIsVerified(user);
+        checkIfUserIsNotBlocked(user);
+    }
+
+    private void checkIfUserIsVerified(User user) {
+        if (!user.isPhoneNumberVerified()) {
+            throw new RuntimeException("User is not verified");
+        }
+    }
+
+    private void checkIfUserIsNotBlocked(User user) {
+        if (user.getAccountStatus() == AccountStatus.BLOCKED) {
+            throw new RuntimeException("User is blocked");
         }
     }
 
@@ -120,10 +144,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private User buildUserFromRequest(RegisterRequest request) {
         return User.builder()
-                .phoneNumber(request.getPhoneNumber())
+                .countryCode(request.getCountryCode())
+                .phoneNumber(request.getCountryCode()+request.getPhoneNumber())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.USER)
                 .accountStatus(AccountStatus.INCOMPLETE)
+                .isPhoneNumberVerified(true) // TO REMOVE ON PRODUCTION
                 .build();
     }
 

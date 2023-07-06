@@ -1,4 +1,4 @@
-package com.crush.service.validation;
+package com.crush.service.validation.phone;
 
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import jakarta.validation.ConstraintValidator;
@@ -11,7 +11,6 @@ public class PhoneNumberConstraintValidator implements ConstraintValidator<Valid
 
     @Override
     public void initialize(ValidPhoneNumber constraintAnnotation) {
-        System.out.println("Initializing phone number validator");
     }
 
     @SneakyThrows
